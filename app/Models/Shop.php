@@ -10,7 +10,7 @@ class Shop extends Model
     use HasFactory;
 
     protected $connection = 'pgsql';
-    protected $table = 'public.tbltoko';
+    protected $table = 'pmov2.tbltoko';
     protected $primaryKey = 'kd_toko';
     public $incrementing = false;
     protected $keyType = 'string';

@@ -49,7 +49,7 @@ class ShopWebController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'kd_toko' => 'required|string|max:10|unique:pgsql.public.tbltoko,kd_toko',
+            'kd_toko' => 'required|string|max:10|unique:pgsql.pmov2.tbltoko,kd_toko',
             'toko' => 'required|string|max:255',
             'no_telp' => 'nullable|string|max:20',
             'alamat' => 'nullable|string',

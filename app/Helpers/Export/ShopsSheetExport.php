@@ -17,7 +17,7 @@ class ShopsSheetExport
                 COALESCE(u.email, '') as email,
                 COALESCE(t.no_telp, '') as nohp,
                 CASE WHEN t.toko_active = true THEN 'AKTIF' ELSE 'NONAKTIF' END as status
-            FROM public.tbltoko t
+            FROM pmov2.tbltoko t
             LEFT JOIN pmov2.users u ON u.fk_toko = t.kd_toko AND u.role = 'dealer'
             ORDER BY t.toko
         ");

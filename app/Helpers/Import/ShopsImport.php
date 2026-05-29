@@ -45,7 +45,7 @@ class ShopsImport
                 }
 
                 $existingToko = DB::connection('pgsql')
-                    ->table('public.tbltoko')
+                    ->table('pmov2.tbltoko')
                     ->where('kd_toko', $kd_toko)
                     ->first();
 
