@@ -26,43 +26,20 @@ class SalesSupervisorSheetExport
             ORDER BY ss.jabatan, ss.nama
         ");
 
-        $filename = 'data-sales-spv-' . date('Y-m-d') . '.xls';
+        $rows = array_map(fn($r) => [
+            $r->nama, $r->email, $r->jabatan, $r->nohp, $r->kode,
+        ], $data);
 
-        $xml  = '<?xml version="1.0" encoding="UTF-8"?>' . "\n"
-              . '<?mso-application progid="Excel.Sheet"?>' . "\n"
-              . '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"'
-              . ' xmlns:o="urn:schemas-microsoft-com:office:office"'
-              . ' xmlns:x="urn:schemas-microsoft-com:office:excel"'
-              . ' xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">' . "\n";
-
-        $xml .= '<Worksheet ss:Name="Sales &amp; SPV">' . "\n" . '<Table>' . "\n";
-        $xml .= self::row(['nama', 'email', 'spv / salesman', 'nohp', 'kode']);
-        foreach ($data as $row) {
-            $xml .= self::row([
-                $row->nama,
-                $row->email,
-                $row->jabatan,
-                $row->nohp,
-                $row->kode,
-            ]);
-        }
-        $xml .= '</Table>' . "\n" . '</Worksheet>' . "\n";
-        $xml .= '</Workbook>';
-
-        return response($xml, 200, [
-            'Content-Type'        => 'application/vnd.ms-excel; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        $xlsx = ShopsSheetExport::build([
+            'Sales & SPV' => ['headers' => ['NAMA', 'EMAIL', 'JABATAN', 'NOHP', 'KODE'], 'rows' => $rows],
         ]);
-    }
 
-    private static function row(array $values): string
-    {
-        $cells = '';
-        foreach ($values as $v) {
-            $cells .= '<Cell><Data ss:Type="String">'
-                . htmlspecialchars((string)$v, ENT_XML1, 'UTF-8')
-                . '</Data></Cell>';
-        }
-        return '<Row>' . $cells . '</Row>' . "\n";
+        $filename = 'data-sales-spv-' . date('Y-m-d') . '.xlsx';
+
+        return response($xlsx, 200, [
+            'Content-Type'        => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'Content-Length'      => strlen($xlsx),
+        ]);
     }
 }
