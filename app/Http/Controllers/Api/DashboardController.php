@@ -3,61 +3,40 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Services\DashboardService;
-use App\Http\Resources\UserResource;
-use App\Http\Resources\FlpResource;
+use App\Helpers\ApiResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
-    protected $dashboardService;
-
-    public function __construct(DashboardService $dashboardService)
-    {
-        $this->dashboardService = $dashboardService;
-    }
-
-    public function index(Request $request): JsonResponse
+    public function stats(Request $request)
     {
         $user = $request->user();
-        $flp = $user->flp;
+        $cart = $user->activeCart()->first();
+        $cartCount = $cart ? $cart->totalItems : 0;
 
-        if (!$flp) {
-            return response()->json([
-                'success' => false,
-                'message' => 'User tidak terdaftar sebagai FLP',
-            ], 403);
+        // Get last successful collection cache refresh
+        $lastRefresh = DB::connection('pgsql')
+            ->table('pmov2.collection_cache_status')
+            ->where('status', 'success')
+            ->orderBy('last_refresh_at', 'desc')
+            ->first();
+
+        $collectionLastUpdate = null;
+        if ($lastRefresh) {
+            $collectionLastUpdate = [
+                'last_refresh_at' => $lastRefresh->last_refresh_at,
+                'total_shops_processed' => $lastRefresh->total_shops_processed,
+                'total_records' => $lastRefresh->total_records,
+                'duration_seconds' => $lastRefresh->duration_seconds,
+            ];
         }
 
-        $dealerInfo = $this->dashboardService->getDealerInfo($flp->id_flp);
-
-        if (!$dealerInfo) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Data dealer tidak ditemukan',
-            ], 404);
-        }
-
-        $pencapaian = $this->dashboardService->getPencapaianBulanIni(
-            $flp->id_flp,
-            $dealerInfo['dealer_code']
-        );
-
-        $summary = $this->dashboardService->getSummaryMetrics(
-            $flp->id_flp,
-            $dealerInfo['dealer_code']
-        );
-
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'user' => new UserResource($user),
-                'flp' => new FlpResource($flp),
-                'dealer' => $dealerInfo,
-                'pencapaian' => $pencapaian,
-                'summary' => $summary,
-            ],
+        return ApiResponse::success([
+            'deliveryProgress' => '0%',
+            'monthlyBuyIn' => 'Rp 0',
+            'cartCount' => $cartCount,
+            'collectionLastUpdate' => $collectionLastUpdate
         ]);
     }
 }

@@ -13,12 +13,17 @@ class AuthServiceProvider extends ServiceProvider
     {
         Auth::viaRequest('custom-token', function ($request) {
             $token = $request->bearerToken();
-            
+
             if (!$token) {
                 return null;
             }
 
-            [$id, $plainToken] = explode('|', $token, 2);
+            $parts = explode('|', $token, 2);
+            if (count($parts) !== 2) {
+                return null;
+            }
+
+            [$id, $plainToken] = $parts;
 
             $accessToken = PersonalAccessToken::where('id', $id)->first();
 
@@ -33,7 +38,7 @@ class AuthServiceProvider extends ServiceProvider
             $accessToken->update(['last_used_at' => now()]);
 
             $user = User::where('id', $accessToken->tokenable_id)->first();
-            
+
             if ($user) {
                 $user->accessToken = $accessToken;
             }

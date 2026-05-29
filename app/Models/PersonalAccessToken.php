@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class PersonalAccessToken extends Model
 {
-    protected $connection = 'pgsql_nms';
+    protected $connection = 'pgsql';
     protected $table = 'personal_access_tokens';
 
     protected $fillable = [

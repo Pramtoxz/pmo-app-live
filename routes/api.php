@@ -1,80 +1,111 @@
 <?php
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Cache\RateLimiting\Limit;
-use Illuminate\Support\Facades\RateLimiter;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\PartController;
+use App\Http\Controllers\Api\CartController;
 use App\Http\Controllers\Api\DashboardController;
-use App\Http\Controllers\Api\TargetSalesController;
-use App\Http\Controllers\Api\StockController;
-use App\Http\Controllers\Api\IndentController;
-use App\Http\Controllers\Api\TargetProspekController;
-use App\Http\Controllers\Api\ProspekController;
-use App\Http\Controllers\Api\ActualSpkController;
-use App\Http\Controllers\Api\PerformanceController;
-use App\Http\Controllers\Api\ProfileController;
-use App\Http\Controllers\Api\ActualSalesController;
-use App\Http\Controllers\Api\MasterController;
+use App\Http\Controllers\Api\CampaignController;
+use App\Http\Controllers\Api\NotificationController;
+use App\Http\Controllers\Api\OrderController;
+use App\Http\Controllers\Api\FilterController;
 
-RateLimiter::for('auth', function (Request $request) {
-    return Limit::perMinute(5)->by($request->ip());
+// Internal cron endpoint — no auth, secret key only
+Route::post('/internal/refresh-cache', function (\Illuminate\Http\Request $request) {
+    $key = env('INTERNAL_CRON_KEY', '');
+    if (empty($key) || $request->header('X-Internal-Key') !== $key) {
+        return response()->json(['message' => 'Unauthorized'], 401);
+    }
+
+    // Kirim response 200 dulu, job jalan setelah koneksi client ditutup
+    response()->json(['message' => 'Cache refresh dimulai di background'])->send();
+
+    if (function_exists('fastcgi_finish_request')) {
+        fastcgi_finish_request();
+    }
+
+    set_time_limit(0);
+    ignore_user_abort(true);
+    (new \App\Jobs\RefreshCollectionCache)->handle();
+    exit(0);
 });
 
-RateLimiter::for('api', function (Request $request) {
-    return Limit::perMinute(60)->by($request->user()?->id ?: $request->ip());
+// Public routes with auth throttle
+Route::middleware('throttle:auth')->group(function () {
+    Route::post('/auth/login', [AuthController::class, 'login']);
+    Route::post('/auth/verify-otp', [AuthController::class, 'verifyOTP']);
 });
 
-RateLimiter::for('write', function (Request $request) {
-    return Limit::perMinute(10)->by($request->user()?->id ?: $request->ip());
-});
+// OTP requests with stricter throttle
+Route::post('/auth/request-otp', [AuthController::class, 'requestOTP'])->middleware('throttle:otp');
 
-Route::post('/auth/login', [AuthController::class, 'login'])->middleware('throttle:auth');
-Route::post('/auth/biometric/login', [AuthController::class, 'biometricLogin'])->middleware('throttle:auth');
+use App\Http\Controllers\Api\CollectionController;
 
+// Protected routes with API throttle
 Route::middleware(['auth:api', 'throttle:api'])->group(function () {
+    // Auth
+    Route::get('/auth/profile', [AuthController::class, 'profile']);
+    Route::put('/auth/profile', [AuthController::class, 'updateProfile'])->middleware('verify.collection.pin');
     Route::post('/auth/logout', [AuthController::class, 'logout']);
-    Route::post('/auth/logout-all', [AuthController::class, 'logoutAll']);
-    Route::get('/auth/me', [AuthController::class, 'me']);
-    Route::get('/auth/devices', [AuthController::class, 'devices']);
-    Route::post('/auth/biometric/register', [AuthController::class, 'biometricRegister']);
-    Route::post('/auth/biometric/revoke', [AuthController::class, 'biometricRevoke']);
     
-    Route::get('/dashboard', [DashboardController::class, 'index']);
-    Route::get('/target-sales', [TargetSalesController::class, 'index']);
-    Route::get('/stock', [StockController::class, 'index']);
-    Route::get('/indent', [IndentController::class, 'index']);
-    Route::get('/target-prospek', [TargetProspekController::class, 'index']);
-    Route::get('/prospek', [ProspekController::class, 'index']);
-    Route::get('/prospek/detail', [ProspekController::class, 'show']);
-    Route::get('/prospek/cek-leads', [ProspekController::class, 'cekLeads']);
-    Route::get('/actual-spk', [ActualSpkController::class, 'index']);
-    Route::get('/actual-spk/detail', [ActualSpkController::class, 'show']);
-    Route::get('/actual-sales', [ActualSalesController::class, 'index']);
-    Route::get('/actual-sales/detail', [ActualSalesController::class, 'show']);
-    Route::get('/performance', [PerformanceController::class, 'index']);
-    Route::get('/master/sumber-data', [MasterController::class, 'sumberData']);
-    Route::get('/master/tipe-konsumen', [MasterController::class, 'tipeKonsumen']);
-    Route::get('/master/rencana-pembayaran', [MasterController::class, 'rencanaPembayaran']);
-    Route::get('/master/tipe-kendaraan', [MasterController::class, 'tipeKendaraan']);
-    Route::get('/master/warna-kendaraan', [MasterController::class, 'warnaKendaraan']);
-    Route::get('/master/janji-temu', [MasterController::class, 'janjiTemu']);
-    Route::get('/profile', [ProfileController::class, 'show']);
-    Route::put('/profile', [ProfileController::class, 'update'])->middleware('throttle:write');
-});
-
-Route::middleware(['auth:api', 'throttle:write'])->group(function () {
-    Route::post('/prospek', [ProspekController::class, 'store']);
-    Route::post('/prospek/generate-leads', [ProspekController::class, 'generateLeads']);
-    Route::put('/prospek/{id}', [ProspekController::class, 'update'])->where('id', '.*');
-    Route::delete('/prospek/{id}', [ProspekController::class, 'destroy'])->where('id', '.*');
-    Route::post('/profile/photo', [ProfileController::class, 'uploadPhoto']);
-});
-
-Route::get('/health', function () {
-    return response()->json([
-        'status' => 'success',
-        'message' => 'API is running',
-        'timestamp' => now()->toDateTimeString()
-    ]);
+    // Parts
+    Route::get('/parts', [PartController::class, 'index']);
+    Route::get('/parts/{partNumber}', [PartController::class, 'show']);
+    Route::get('/parts/{partNumber}/stock', [OrderController::class, 'checkStock']);
+    
+    // Filters
+    Route::get('/filters/vehicle-types', [FilterController::class, 'getVehicleTypes']);
+    Route::get('/filters/categories', [FilterController::class, 'getCategories']);
+    
+    // Cart
+    Route::prefix('cart')->group(function () {
+        Route::get('/', [CartController::class, 'index']);
+        Route::post('/add', [CartController::class, 'add']);
+        Route::put('/{id}', [CartController::class, 'update']);
+        Route::delete('/{id}', [CartController::class, 'destroy']);
+        Route::delete('/clear', [CartController::class, 'clear']);
+        Route::post('/checkout', [OrderController::class, 'checkout'])->middleware('throttle:checkout');
+    });
+    
+    // Orders 
+    Route::get('/orders', [OrderController::class, 'history']);
+    Route::get('/orders/{noSo}/back-order', [OrderController::class, 'backOrder'])->where('noSo', '.*');
+    Route::get('/orders/{noSo}', [OrderController::class, 'detail'])->where('noSo', '.*');
+    
+    // Dashboard
+    Route::get('/dashboard/stats', [DashboardController::class, 'stats']);
+    
+    // Campaigns
+    Route::get('/campaigns', [CampaignController::class, 'index']);
+    Route::get('/campaigns/my-achievement', [CampaignController::class, 'myAchievement']);
+    Route::get('/campaigns/{id}', [CampaignController::class, 'show']);
+    
+    // Notifications
+    Route::prefix('notifications')->group(function () {
+        Route::get('/', [NotificationController::class, 'index']);
+        Route::get('/unread-count', [NotificationController::class, 'unreadCount']);
+        Route::put('/{id}/read', [NotificationController::class, 'markAsRead']);
+        Route::put('/mark-all-read', [NotificationController::class, 'markAllAsRead']);
+        Route::post('/test', [NotificationController::class, 'sendTest']);
+        Route::post('/fcm-token', [NotificationController::class, 'updateFcmToken']); // Alias
+    });
+    
+    // FCM Token
+    Route::post('/fcm/update-token', [NotificationController::class, 'updateFcmToken']);
+    Route::post('/notifications/update-token', [NotificationController::class, 'updateFcmToken']); // Additional alias
+    
+    // Collections
+    Route::prefix('collections')->group(function () {
+        Route::get('/pin/status', [CollectionController::class, 'checkPinStatus']);
+        Route::post('/pin/setup', [CollectionController::class, 'setupPin']);
+        Route::post('/pin/change', [CollectionController::class, 'changePin']);
+        Route::post('/pin/verify', [CollectionController::class, 'verifyPin']);
+        
+        Route::middleware('verify.collection.pin')->group(function () {
+            Route::get('/', [CollectionController::class, 'index']);
+            Route::get('/summary', [CollectionController::class, 'summary']);
+            Route::get('/reminders', [CollectionController::class, 'reminders']);
+            Route::get('/{noFaktur}', [CollectionController::class, 'detail'])->where('noFaktur', '.*');
+        });
+    });
 });

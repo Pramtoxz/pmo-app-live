@@ -10,21 +10,22 @@ class User extends Authenticatable
 {
     use HasFactory, Notifiable;
 
-    protected $connection = 'pgsql_nms';
+    protected $connection = 'pgsql';
 
     protected $fillable = [
         'name',
         'email',
         'password',
-        'kd_kariawan',
-        'username',
-        'level',
-        'no_hp',
+        'fk_toko',
+        'role',
+        'fcm_token',
+        'collection_pin',
     ];
 
     protected $hidden = [
         'password',
         'remember_token',
+        'collection_pin',
     ];
 
     protected function casts(): array
@@ -35,15 +36,25 @@ class User extends Authenticatable
         ];
     }
 
-    public function flp()
+    public function shop()
     {
-        return $this->hasOne(Flp::class, 'id_flp', 'kd_kariawan');
+        return $this->belongsTo(\App\Models\Shop::class, 'fk_toko', 'kd_toko');
     }
 
-    public function createToken($name)
+    public function carts()
+    {
+        return $this->hasMany(\App\Models\Cart::class);
+    }
+
+    public function activeCart()
+    {
+        return $this->hasOne(\App\Models\Cart::class)->where('status', 'active');
+    }
+
+    public function createToken(string $name)
     {
         $token = bin2hex(random_bytes(32));
-        
+
         $accessToken = PersonalAccessToken::create([
             'tokenable_type' => self::class,
             'tokenable_id' => $this->id,
