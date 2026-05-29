@@ -26,7 +26,7 @@ class SalesSupervisorSheetExport
             ORDER BY ss.jabatan, ss.nama
         ");
 
-        $filename = 'data-sales-spv-' . date('Y-m-d') . '.xml';
+        $filename = 'data-sales-spv-' . date('Y-m-d') . '.xls';
 
         $xml  = '<?xml version="1.0" encoding="UTF-8"?>' . "\n"
               . '<?mso-application progid="Excel.Sheet"?>' . "\n"

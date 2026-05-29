@@ -40,7 +40,7 @@ class ShopsSheetExport
             ORDER BY ss.jabatan, ss.nama
         ");
 
-        $filename = 'data-toko-' . date('Y-m-d') . '.xml';
+        $filename = 'data-toko-' . date('Y-m-d') . '.xls';
 
         $xml  = self::openWorkbook();
         $xml .= self::sheet('Toko', ['NAMA TOKO', 'SALESMAN', 'SPV', 'KODE', 'EMAIL', 'NOHP', 'STATUS'], $shops, [
