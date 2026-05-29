@@ -36,9 +36,9 @@
                         <a href="{{ route('admin.shops.export') }}" class="btn btn-info btn-sm me-2" id="exportBtn">
                             <i class="fas fa-file-export me-1"></i> Export Excel
                         </a>
-                        <a href="{{ route('admin.shops.create') }}" class="btn btn-primary btn-sm">
+                        {{-- <a href="{{ route('admin.shops.create') }}" class="btn btn-primary btn-sm">
                             <i class="fas fa-plus me-1"></i> Tambah Toko
-                        </a>
+                        </a> --}}
                     </div>
                 </div>
             </div>

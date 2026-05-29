@@ -38,7 +38,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
    Route::get('/shops', [ShopWebController::class, 'index'])->name('shops.index');
     Route::get('/shops/export', [ShopWebController::class, 'export'])->name('shops.export');
     Route::post('/shops/import', [ShopWebController::class, 'import'])->name('shops.import');
-    Route::get('/shops/create', [ShopWebController::class, 'create'])->name('shops.create');
+    // Route::get('/shops/create', [ShopWebController::class, 'create'])->name('shops.create');
     Route::post('/shops', [ShopWebController::class, 'store'])->name('shops.store');
     Route::get('/shops/{kd_toko}', [ShopWebController::class, 'show'])->name('shops.show');
     Route::get('/shops/{kd_toko}/edit', [ShopWebController::class, 'edit'])->name('shops.edit');
