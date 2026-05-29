@@ -67,9 +67,9 @@
                                             <label class="form-check-label" for="rememberMe">Remember me</label>
                                         </div>
                                         <div class="form-group mb-3">
-                                            <div class="g-recaptcha" data-sitekey="{{ config('services.recaptcha.site_key') }}"></div>
-                                            
-                                            @error('g-recaptcha-response')
+                                            <label>Verifikasi: Berapa {{ session('captcha_question') }} ?</label>
+                                            <input type="number" name="captcha" class="form-control" placeholder="Jawaban" autocomplete="off" required>
+                                            @error('captcha')
                                                 <span class="text-danger small">{{ $message }}</span>
                                             @enderror
                                         </div>
@@ -100,8 +100,6 @@
     
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
-    
     @if(session('success'))
     <script>
         Swal.fire({
