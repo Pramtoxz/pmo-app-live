@@ -1,0 +1,749 @@
+{
+	"info": {
+		"name": "Sales Tools Mobile API",
+		"description": "API Collection for Sales Tools Mobile App - FLP (Field Sales Person)",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8000/api",
+			"type": "string"
+		},
+		{
+			"key": "token",
+			"value": "",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.data && jsonData.data.token) {",
+									"        pm.collectionVariables.set('token', jsonData.data.token);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"android@gmail.com\",\n  \"password\": \"android\",\n  \"device_id\": \"postman-test-001\",\n  \"device_name\": \"Postman\",\n  \"device_type\": \"android\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/login",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "login"]
+						}
+					}
+				},
+				{
+					"name": "Get Current User",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/auth/me",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "me"]
+						}
+					}
+				},
+				{
+					"name": "Get Devices",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/auth/devices",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "devices"]
+						}
+					}
+				},
+				{
+					"name": "Logout Current Device",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/auth/logout",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "logout"]
+						}
+					}
+				},
+				{
+					"name": "Logout All Devices",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/auth/logout-all",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "logout-all"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Dashboard",
+			"item": [
+				{
+					"name": "Get Dashboard",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/dashboard",
+							"host": ["{{base_url}}"],
+							"path": ["dashboard"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Sales",
+			"item": [
+				{
+					"name": "Get Target Sales",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/target-sales?start_date=2023-01-01&end_date=2023-12-31",
+							"host": ["{{base_url}}"],
+							"path": ["target-sales"],
+							"query": [
+								{
+									"key": "start_date",
+									"value": "2023-01-01"
+								},
+								{
+									"key": "end_date",
+									"value": "2023-12-31"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Stock",
+			"item": [
+				{
+					"name": "Get Stock",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/stock?search=BEAT",
+							"host": ["{{base_url}}"],
+							"path": ["stock"],
+							"query": [
+								{
+									"key": "search",
+									"value": "BEAT"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Indent",
+			"item": [
+				{
+					"name": "Get Indent List",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/indent",
+							"host": ["{{base_url}}"],
+							"path": ["indent"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Prospek",
+			"item": [
+				{
+					"name": "Get Target Prospek",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/target-prospek?bulan=3&tahun=2023",
+							"host": ["{{base_url}}"],
+							"path": ["target-prospek"],
+							"query": [
+								{
+									"key": "bulan",
+									"value": "3"
+								},
+								{
+									"key": "tahun",
+									"value": "2023"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Prospek List",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/prospek?per_page=15&bulan=3&tahun=2023&status=t",
+							"host": ["{{base_url}}"],
+							"path": ["prospek"],
+							"query": [
+								{
+									"key": "per_page",
+									"value": "15"
+								},
+								{
+									"key": "bulan",
+									"value": "3"
+								},
+								{
+									"key": "tahun",
+									"value": "2023"
+								},
+								{
+									"key": "status",
+									"value": "t",
+									"description": "t=approved, f=pending, b=cancel"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Create Prospek",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"tanggal\": \"2023-05-16\",\n  \"nama_customer\": \"John Doe\",\n  \"no_hp\": \"08123456789\",\n  \"kode_type\": \"LV0\",\n  \"kode_warna\": \"RD\",\n  \"rencana_pembayaran\": \"1\",\n  \"tipe_customer\": \"I\",\n  \"alamat_prospect\": \"Jakarta\",\n  \"alamat_kantor_prospect\": \"Jakarta\",\n  \"source\": \"0004\",\n  \"keterangan\": \"Test prospek\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/prospek",
+							"host": ["{{base_url}}"],
+							"path": ["prospek"]
+						}
+					}
+				},
+				{
+					"name": "Update Prospek",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"nama_customer\": \"John Doe Updated\",\n  \"no_hp\": \"08123456789\",\n  \"keterangan\": \"Updated keterangan\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/prospek/C10-02602-23-03-PSP-0004-0001",
+							"host": ["{{base_url}}"],
+							"path": ["prospek", "C10-02602-23-03-PSP-0004-0001"]
+						}
+					}
+				},
+				{
+					"name": "Delete Prospek",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/prospek/C10-02602-23-03-PSP-0004-0001",
+							"host": ["{{base_url}}"],
+							"path": ["prospek", "C10-02602-23-03-PSP-0004-0001"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "SPK",
+			"item": [
+				{
+					"name": "Get Actual SPK (Current Month)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/actual-spk?bulan=5&tahun=2026&per_page=15",
+							"host": ["{{base_url}}"],
+							"path": ["actual-spk"],
+							"query": [
+								{
+									"key": "bulan",
+									"value": "5",
+									"description": "Filter by month (1-12)"
+								},
+								{
+									"key": "tahun",
+									"value": "2026",
+									"description": "Filter by year"
+								},
+								{
+									"key": "per_page",
+									"value": "15",
+									"description": "Items per page"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Actual SPK (All - No Filter)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/actual-spk?per_page=50",
+							"host": ["{{base_url}}"],
+							"path": ["actual-spk"],
+							"query": [
+								{
+									"key": "per_page",
+									"value": "50",
+									"description": "Items per page"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Actual SPK (Approved Only)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/actual-spk?status=t&bulan=5&tahun=2026",
+							"host": ["{{base_url}}"],
+							"path": ["actual-spk"],
+							"query": [
+								{
+									"key": "status",
+									"value": "t",
+									"description": "t=approved, f=pending"
+								},
+								{
+									"key": "bulan",
+									"value": "5"
+								},
+								{
+									"key": "tahun",
+									"value": "2026"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Performance",
+			"item": [
+				{
+					"name": "Get Performance Ranking (Current Month)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/performance",
+							"host": ["{{base_url}}"],
+							"path": ["performance"]
+						}
+					}
+				},
+				{
+					"name": "Get Performance Ranking (Custom Period)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/performance?start_date=2026-05-01&end_date=2026-05-31&limit=20",
+							"host": ["{{base_url}}"],
+							"path": ["performance"],
+							"query": [
+								{
+									"key": "start_date",
+									"value": "2026-05-01",
+									"description": "Start date (YYYY-MM-DD)"
+								},
+								{
+									"key": "end_date",
+									"value": "2026-05-31",
+									"description": "End date (YYYY-MM-DD)"
+								},
+								{
+									"key": "limit",
+									"value": "20",
+									"description": "Top N performers"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Performance Ranking (Top 10)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/performance?limit=10",
+							"host": ["{{base_url}}"],
+							"path": ["performance"],
+							"query": [
+								{
+									"key": "limit",
+									"value": "10",
+									"description": "Show top 10 only"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Actual Sales",
+			"item": [
+				{
+					"name": "Get Actual Sales (Current Month)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/actual-sales",
+							"host": ["{{base_url}}"],
+							"path": ["actual-sales"],
+							"query": []
+						},
+						"description": "Default: bulan dan tahun saat ini"
+					}
+				},
+				{
+					"name": "Get Actual Sales (All - No Filter)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/actual-sales?bulan=5&tahun=2026&per_page=50",
+							"host": ["{{base_url}}"],
+							"path": ["actual-sales"],
+							"query": [
+								{
+									"key": "bulan",
+									"value": "5",
+									"description": "Filter by month (1-12)"
+								},
+								{
+									"key": "tahun",
+									"value": "2026",
+									"description": "Filter by year"
+								},
+								{
+									"key": "per_page",
+									"value": "50",
+									"description": "Items per page"
+								}
+							]
+						},
+						"description": "Custom bulan, tahun, dan per_page"
+					}
+				},
+				{
+					"name": "Get Actual Sales (Custom Period)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/actual-sales?bulan=12&tahun=2019&per_page=20",
+							"host": ["{{base_url}}"],
+							"path": ["actual-sales"],
+							"query": [
+								{
+									"key": "bulan",
+									"value": "12",
+									"description": "December"
+								},
+								{
+									"key": "tahun",
+									"value": "2019",
+									"description": "Year 2019"
+								},
+								{
+									"key": "per_page",
+									"value": "20"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Profile",
+			"item": [
+				{
+					"name": "Get Profile",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/profile",
+							"host": ["{{base_url}}"],
+							"path": ["profile"]
+						}
+					}
+				},
+				{
+					"name": "Update Profile",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"DITO ANDROID UPDATED\",\n  \"email\": \"android@gmail.com\",\n  \"no_hp\": \"082285914348\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/profile",
+							"host": ["{{base_url}}"],
+							"path": ["profile"]
+						}
+					}
+				},
+				{
+					"name": "Update Password",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"password\": \"newpassword123\",\n  \"password_confirmation\": \"newpassword123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/profile",
+							"host": ["{{base_url}}"],
+							"path": ["profile"]
+						}
+					}
+				},
+				{
+					"name": "Upload Photo",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "photo",
+									"type": "file",
+									"src": [],
+									"description": "Select image file (jpg, png, jpeg, max 2MB)"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/profile/photo",
+							"host": ["{{base_url}}"],
+							"path": ["profile", "photo"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Health Check",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/health",
+					"host": ["{{base_url}}"],
+					"path": ["health"]
+				}
+			}
+		}
+	]
+}
