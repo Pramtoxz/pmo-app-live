@@ -193,7 +193,7 @@ class ShopWebController extends Controller
     {
         $key  = env('INTERNAL_CRON_KEY', '');
         $host = parse_url(config('app.url'), PHP_URL_HOST) ?: '127.0.0.1';
-        $cmd  = 'curl -s -X POST http://127.0.0.1/api/internal/refresh-cache'
+        $cmd  = 'curl -s -k -X POST https://127.0.0.1/api/internal/refresh-cache'
               . ' -H ' . escapeshellarg('Host: ' . $host)
               . ' -H ' . escapeshellarg('X-Internal-Key: ' . $key)
               . ' > /dev/null 2>&1 &';
