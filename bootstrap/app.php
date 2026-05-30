@@ -21,5 +21,5 @@ return Application::configure(basePath: dirname(__DIR__))
         \App\Providers\AuthServiceProvider::class,
     ])
     ->withExceptions(function (Exceptions $exceptions) {
-        //
+        $exceptions->shouldRenderJsonWhen(fn ($request) => $request->is('api/*'));
     })->create();

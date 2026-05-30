@@ -1,1 +1,4 @@
-0 3 * * * curl -s -X POST --max-time 3600 http://127.0.0.1/api/internal/refresh-cache -H "Host: pmo.menara-agung.com" -H "X-Internal-Key: 19efa846174e4c4b869798cefca7d1c99db929e7b4c0572e" > /dev/null 2>&1
+0 3 * * * curl -s -X POST --max-time 3600 http://127.0.0.1/api/internal/refresh-cache -H "Host: partpmo.menara-agung.com" -H "X-Internal-Key: 19efa846174e4c4b869798cefca7d1c99db929e7b4c0572e" > /dev/null 2>&1
+curl -v -X POST --max-time 3600 http://127.0.0.1/api/internal/refresh-cache \
+  -H "Host: partpmo.menara-agung.com" \
+  -H "X-Internal-Key: 19efa846174e4c4b869798cefca7d1c99db929e7b4c0572e"
