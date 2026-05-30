@@ -79,8 +79,6 @@ return [
             ]) : [],
         ],
 
-
-
         'pgsql' => [
             'driver' => 'pgsql',
             'url' => env('DB_URL'),
@@ -119,6 +117,20 @@ return [
             'database' => env('DB_DATABASE_NMS', 'laravel'),
             'username' => env('DB_USERNAME_NMS', 'root'),
             'password' => env('DB_PASSWORD_NMS', ''),
+            'charset' => env('DB_CHARSET', 'utf8'),
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'search_path' => 'public',
+            'sslmode' => 'prefer',
+        ],
+          'pgsql_nms' => [
+            'driver' => 'pgsql',
+            'url' => env('DB_URL'),
+            'host' => env('DB_LIVE_HOST', '127.0.0.1'),
+            'port' => env('DB_LIVE_PORT', '5432'),
+            'database' => env('DB_LIVE_DATABASE', 'laravel'),
+            'username' => env('DB_LIVE_USERNAME', 'root'),
+            'password' => env('DB_LIVE_PASSWORD', ''),
             'charset' => env('DB_CHARSET', 'utf8'),
             'prefix' => '',
             'prefix_indexes' => true,

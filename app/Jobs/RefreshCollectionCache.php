@@ -23,22 +23,17 @@ class RefreshCollectionCache implements ShouldQueue
     {
         $startTime = now();
 
-        Log::info('RefreshCollectionCache: Mulai', [
-            'waktu' => $startTime->format('Y-m-d H:i:s'),
-        ]);
-
         DB::connection('pgsql')->table('pmov2.collection_cache_status')->insert([
-            'status'         => 'running',
+            'status'          => 'running',
             'last_refresh_at' => $startTime,
-            'created_at'     => $startTime,
-            'updated_at'     => $startTime,
+            'created_at'      => $startTime,
+            'updated_at'      => $startTime,
         ]);
 
         try {
-            (new WhatsAppGateway(1))->sendToGroup(null,
+            (new WhatsAppGateway(2))->sendToGroup(null,
                 "[PMO] Refresh cache piutang dimulai pada " . $startTime->format('d/m/Y H:i:s') . ".\nProses berlangsung ±40 menit."
             );
-            Log::info('RefreshCollectionCache: WA notif start terkirim');
         } catch (\Exception $e) {
             Log::warning('RefreshCollectionCache: WA notif start gagal', ['error' => $e->getMessage()]);
         }
@@ -52,21 +47,14 @@ class RefreshCollectionCache implements ShouldQueue
             $processed  = 0;
             $failed     = 0;
 
-            Log::info("RefreshCollectionCache: Total toko aktif = {$totalShops}");
-
             foreach ($shops as $kdToko) {
                 try {
                     $this->refreshShopCollection($kdToko, $bulan, $tahun);
                     $processed++;
-
-                    if ($processed % 10 === 0) {
-                        Log::info("RefreshCollectionCache: Progress {$processed}/{$totalShops}");
-                    }
                 } catch (\Exception $e) {
                     $failed++;
                     Log::error("RefreshCollectionCache: Gagal toko {$kdToko}", [
                         'error' => $e->getMessage(),
-                        'trace' => $e->getTraceAsString(),
                     ]);
                 }
             }
@@ -80,14 +68,6 @@ class RefreshCollectionCache implements ShouldQueue
                 ->where('tahun', $tahun)
                 ->count();
 
-            Log::info('RefreshCollectionCache: Selesai', [
-                'toko_sukses'  => $processed,
-                'toko_gagal'   => $failed,
-                'total_toko'   => $totalShops,
-                'total_record' => $totalRecords,
-                'durasi_detik' => $duration,
-            ]);
-
             DB::connection('pgsql')->table('pmov2.collection_cache_status')->insert([
                 'status'                => 'success',
                 'last_refresh_at'       => $endTime,
@@ -99,10 +79,9 @@ class RefreshCollectionCache implements ShouldQueue
             ]);
 
             try {
-                (new WhatsAppGateway(1))->sendToGroup(null,
+                (new WhatsAppGateway(2))->sendToGroup(null,
                     "[PMO] Refresh cache piutang SELESAI.\nToko: {$processed}/{$totalShops} | Gagal: {$failed} | Data: {$totalRecords} | Durasi: {$duration} detik."
                 );
-                Log::info('RefreshCollectionCache: WA notif selesai terkirim');
             } catch (\Exception $e) {
                 Log::warning('RefreshCollectionCache: WA notif selesai gagal', ['error' => $e->getMessage()]);
             }
@@ -113,15 +92,15 @@ class RefreshCollectionCache implements ShouldQueue
             ]);
 
             DB::connection('pgsql')->table('pmov2.collection_cache_status')->insert([
-                'status'         => 'failed',
+                'status'          => 'failed',
                 'last_refresh_at' => now(),
-                'error_message'  => $e->getMessage(),
-                'created_at'     => now(),
-                'updated_at'     => now(),
+                'error_message'   => $e->getMessage(),
+                'created_at'      => now(),
+                'updated_at'      => now(),
             ]);
 
             try {
-                (new WhatsAppGateway(1))->sendToGroup(null,
+                (new WhatsAppGateway(2))->sendToGroup(null,
                     "[PMO] Refresh cache piutang GAGAL.\nError: " . $e->getMessage()
                 );
             } catch (\Exception $waEx) {
@@ -134,8 +113,6 @@ class RefreshCollectionCache implements ShouldQueue
 
     private function refreshShopCollection($kdToko, $bulan, $tahun): void
     {
-        Log::info("RefreshCollectionCache: Proses toko {$kdToko}");
-
         DB::connection('pgsql')->table('pmov2.collections_cache')
             ->where('kd_toko', $kdToko)
             ->delete();
@@ -186,10 +163,6 @@ class RefreshCollectionCache implements ShouldQueue
                 'cached_at'        => now(),
             ];
         }
-
-        $countOutstanding = $outstanding->count();
-        $countPaid        = $paidLast30Days->count();
-        Log::info("RefreshCollectionCache: Toko {$kdToko} — outstanding={$countOutstanding}, paid30d={$countPaid}");
 
         if (empty($insertData)) {
             return;
