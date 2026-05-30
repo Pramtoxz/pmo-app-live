@@ -18,9 +18,4 @@ yarn-error.log
 /.fleet
 /.idea
 /.vscode
-
-# PDF manual servis kendaraan — diupload manual ke server, tidak di-track git
-/public/pdf
-
-# Dokumentasi admin template (referensi developer saja, tidak dibutuhkan di server)
 /public/documentation
