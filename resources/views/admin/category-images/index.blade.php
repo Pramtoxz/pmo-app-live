@@ -53,7 +53,7 @@
                                     @endif
                                 </td>
                                 <td>
-                                    <p class="text-xs mb-0">{{ Str::limit($category->deskripsi, 50) }}</p>
+                                    <p class="text-xs mb-0">{{ mb_strlen($category->deskripsi ?? '') > 50 ? mb_substr($category->deskripsi, 0, 50) . '...' : ($category->deskripsi ?? '') }}</p>
                                 </td>
                                 <td class="align-middle text-center">
                                     <a href="{{ route('admin.category-images.edit', $category->id) }}" 

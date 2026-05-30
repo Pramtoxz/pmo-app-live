@@ -58,7 +58,7 @@
                                 </td>
                                 <td>
                                     <p class="text-xs font-weight-bold mb-0">{{ $campaign->judul }}</p>
-                                    <p class="text-xs text-secondary mb-0">{{ Str::limit($campaign->deskripsi, 50) }}</p>
+                                    <p class="text-xs text-secondary mb-0">{{ mb_strlen($campaign->deskripsi ?? '') > 50 ? mb_substr($campaign->deskripsi, 0, 50) . '...' : ($campaign->deskripsi ?? '') }}</p>
                                 </td>
                                 <td>
                                     @if($campaign->badge)
