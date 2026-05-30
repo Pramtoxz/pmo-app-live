@@ -123,7 +123,7 @@ return [
             'search_path' => 'public',
             'sslmode' => 'prefer',
         ],
-          'pgsql_nms' => [
+          'pgsql_live' => [
             'driver' => 'pgsql',
             'url' => env('DB_URL'),
             'host' => env('DB_LIVE_HOST', '127.0.0.1'),
