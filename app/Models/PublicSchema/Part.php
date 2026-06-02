@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Part extends Model
 {
     protected $connection = 'pgsql_dms';
-    protected $table = 'public.tblpart_id';
+    protected $table = 'public.tblpart';
     protected $primaryKey = 'kd_part';
     public $incrementing = false;
     protected $keyType = 'string';

@@ -209,7 +209,7 @@ class Invoice extends Model
         // Get invoice details from DO (Delivery Order)
         $details = DB::connection('pgsql_dms')
             ->table('data_part.tbldo_detail as a')
-            ->leftJoin('public.tblpart_id as b', 'a.fk_part', '=', 'b.kd_part')
+            ->leftJoin('public.tblpart as b', 'a.fk_part', '=', 'b.kd_part')
             ->select([
                 'a.fk_part',
                 'a.qty_do',
