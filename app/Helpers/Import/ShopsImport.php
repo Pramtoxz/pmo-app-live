@@ -47,9 +47,10 @@ class ShopsImport
         // If rows are numeric arrays (from xlsx), first row is header
         if (!$alreadyAssoc) {
             $rawHeader = array_shift($rows);
-            $header    = array_map(fn($h) => strtolower(trim(ltrim((string) $h, "\xEF\xBB\xBF"))), $rawHeader);
+            $header    = array_map(fn($h) => str_replace(' ', '_', strtolower(trim(ltrim((string) $h, "\xEF\xBB\xBF")))), $rawHeader);
             $rows = array_map(function($rawRow) use ($header) {
-                $padded = array_pad($rawRow, count($header), '');
+                $sliced = array_slice($rawRow, 0, count($header));
+                $padded = array_pad($sliced, count($header), '');
                 return array_combine($header, $padded);
             }, $rows);
         }
@@ -105,7 +106,7 @@ class ShopsImport
                     ]);
                 }
 
-                DB::connection('pgsql')->table('public.tbltoko')
+                DB::connection('pgsql')->table('pmov2.tbltoko')
                     ->updateOrInsert(['kd_toko' => $kd_toko], $tokoData);
 
                 DB::connection('pgsql')->table('pmov2.users')

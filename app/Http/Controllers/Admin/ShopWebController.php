@@ -162,7 +162,8 @@ class ShopWebController extends Controller
 
             $message = 'Data toko berhasil diimport! (' . $result['processed'] . ' baris)';
             if (!empty($result['errors'])) {
-                $message .= ' | ' . count($result['errors']) . ' error diabaikan.';
+                $firstErrors = array_slice($result['errors'], 0, 3);
+                $message .= ' | ' . count($result['errors']) . ' error: ' . implode(' | ', $firstErrors);
             }
 
             return redirect()->route('admin.shops.index')->with('success', $message);
