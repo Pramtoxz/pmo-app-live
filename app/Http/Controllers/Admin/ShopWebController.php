@@ -148,8 +148,13 @@ class ShopWebController extends Controller
 
     public function import(Request $request)
     {
+        $ext = strtolower($request->file('file') ? $request->file('file')->getClientOriginalExtension() : '');
+        if (!in_array($ext, ['csv', 'txt', 'xlsx'])) {
+            return redirect()->route('admin.shops.index')
+                ->with('error', 'Format file tidak valid. Gunakan CSV atau Excel (.xlsx).');
+        }
         $request->validate([
-            'file' => 'required|mimes:csv,txt|max:2048',
+            'file' => 'required|file|max:5120',
         ]);
 
         try {
