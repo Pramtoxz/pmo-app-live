@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\DB;
 
 class SalesSupervisorImport
 {
-    private const DEFAULT_PASSWORD_HASH = '$2y$10$7g7i7KLU4DFMVJLQ24ucfe/tjZ/gVRn6WYi7CGrlbQp6VZO2d.QFW';
+    private const DEFAULT_PASSWORD_HASH = '$2y$12$xxtttfLNJil.0EMQvH0fhus4BmT2UcOzOKBt16DCAFj4DYa4bC2X2';
 
     public static function process(string $filepath): array
     {
@@ -15,9 +15,6 @@ class SalesSupervisorImport
         }
         return self::processCsv($filepath);
     }
-
-    // -------------------------------------------------------------------------
-
     private static function processCsv(string $filepath): array
     {
         $handle = fopen($filepath, 'r');
