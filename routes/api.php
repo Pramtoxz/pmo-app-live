@@ -10,14 +10,12 @@ use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\FilterController;
 
-// Internal cron endpoint — no auth, secret key only
 Route::post('/internal/refresh-cache', function (\Illuminate\Http\Request $request) {
     $key = env('INTERNAL_CRON_KEY', '');
     if (empty($key) || $request->header('X-Internal-Key') !== $key) {
         return response()->json(['message' => 'Unauthorized'], 401);
     }
 
-    // Kirim response 200 dulu, job jalan setelah koneksi client ditutup
     response()->json(['message' => 'Cache refresh dimulai di background'])->send();
 
     if (function_exists('fastcgi_finish_request')) {

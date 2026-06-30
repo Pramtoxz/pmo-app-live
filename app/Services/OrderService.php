@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Cart;
+use App\Models\MSendHO;
 use App\Models\Serial;
 use App\Models\DataPart\SalesOrder;
 use App\Models\DataPart\SalesOrderDetail;
@@ -11,6 +12,7 @@ use App\Providers\WhatsAppGateway;
 use App\Helpers\NotificationHelper;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
 
 class OrderService
 {
@@ -28,6 +30,15 @@ class OrderService
 
             if ($cart->items->isEmpty()) {
                 throw new \Exception('Keranjang belanja kosong');
+            }
+
+            // Cek deadline checkout dari MSendHO id=2
+            $deadline = MSendHO::find(2);
+            if ($deadline) {
+                $deadlineDateTime = Carbon::parse($deadline->tgl_kirim_akhir->format('Y-m-d') . ' ' . $deadline->jam);
+                if (now()->greaterThan($deadlineDateTime)) {
+                    throw new \Exception('Checkout ditutup sementara. Silakan tunggu periode selanjutnya.');
+                }
             }
 
             // 2. Tentukan jenis order (OIL vs non-OIL)
