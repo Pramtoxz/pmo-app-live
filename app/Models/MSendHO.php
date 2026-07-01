@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class MSendHO extends Model
 {
-    protected $connection = 'pgsql_nms';
+    protected $connection = 'pgsql_dms';
     protected $table = 'H3.tb_send_ho';
     protected $primaryKey = 'id';
 
