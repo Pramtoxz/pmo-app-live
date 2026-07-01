@@ -20,5 +20,6 @@ class MSendHO extends Model
     ];
 
     protected $casts = [
+        'tgl_kirim_akhir' => 'date',
     ];
 }
