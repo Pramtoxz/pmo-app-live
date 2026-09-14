@@ -149,12 +149,12 @@ class PartController extends Controller
         return ApiResponse::success([
             'items' => $parts->map(function($part) use ($partImages) {
                 $partImage = $partImages->get($part->kd_part);
-                $stock = $part->stock->first(); 
+                $stockSummary = $part->getStockSummary();
                 
                 $name = PartHelper::getPartName($part, $partImage);
                 $description = PartHelper::getPartDescription($part, $partImage);
                 $imageUrl = PartHelper::getPartImage($part->kd_part, $partImage, $part);
-                $isReady = $stock ? $stock->is_available : false;
+                $isReady = $stockSummary->is_ready;
                 $isDiscontinued = !$part->part_active;
                 
                 return [
@@ -183,7 +183,7 @@ class PartController extends Controller
         // Tidak filter part_active agar bisa lihat detail discontinued part untuk cek harga
         $part = Part::with('stock')->where('kd_part', $partNumber)->firstOrFail();
         $partImage = Product::where('kode_part', $part->kd_part)->first();
-        $stock = $part->stock->first(); 
+        $stockSummary = $part->getStockSummary();
 
         $name = PartHelper::getPartName($part, $partImage);
         $description = PartHelper::getPartDescription($part, $partImage);
@@ -197,8 +197,8 @@ class PartController extends Controller
             'name' => $name,
             'description' => $description,
             'price' => (float) $part->het,
-            'isReady' => $stock ? $stock->is_available : false,
-            'stock' => $stock ? max(0, $stock->available) : 0,
+            'isReady' => $stockSummary->is_ready,
+            'stock' => $stockSummary->available_qty,
             'category' => $part->fk_detail_sub_kelompok_part,
             'isDiscontinued' => $isDiscontinued,
             'canOrder' => !$isDiscontinued,

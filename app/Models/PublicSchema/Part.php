@@ -30,7 +30,13 @@ class Part extends Model
 
     public function stock()
     {
-        return $this->hasMany(\App\Models\DataPart\StockPart::class, 'fk_part', 'kd_part');
+        $bulan = (int) date('n');
+        $tahun = (int) date('Y');
+
+        return $this->hasMany(\App\Models\DataPart\StockPart::class, 'fk_part', 'kd_part')
+            ->whereIn('fk_gudang', \App\Models\DataPart\StockPart::ALLOWED_WAREHOUSES)
+            ->where('bulan', $bulan)
+            ->where('tahun', $tahun);
     }
 
     public function category()
@@ -38,8 +44,39 @@ class Part extends Model
         return $this->belongsTo(PartCategory::class, 'fk_detail_sub_kelompok_part', 'kd_detail_sub_kelompok_part');
     }
 
+    public function getStockSummary($bulan = null, $tahun = null)
+    {
+        $targetBulan = (int) ($bulan ?? date('n'));
+        $targetTahun = (int) ($tahun ?? date('Y'));
+
+        $stocks = ($this->relationLoaded('stock') && $targetBulan === (int) date('n') && $targetTahun === (int) date('Y'))
+            ? $this->stock
+            : $this->hasMany(\App\Models\DataPart\StockPart::class, 'fk_part', 'kd_part')
+                ->whereIn('fk_gudang', \App\Models\DataPart\StockPart::ALLOWED_WAREHOUSES)
+                ->where('bulan', $targetBulan)
+                ->where('tahun', $targetTahun)
+                ->get();
+
+        $totalOnHand = (float) $stocks->sum('qty_on_hand');
+        $totalBooking = (float) $stocks->sum('qty_booking');
+        $minStock = (is_numeric($this->min_stok) && (int) $this->min_stok > 0) ? (int) $this->min_stok : 0;
+
+        $available = ($totalOnHand - $totalBooking) - $minStock;
+        $isReady = $available >= 1;
+
+        return (object) [
+            'qty_on_hand' => $totalOnHand,
+            'qty_booking' => $totalBooking,
+            'min_stock' => $minStock,
+            'available' => $available,
+            'available_qty' => max(0, $available),
+            'is_available' => $isReady,
+            'is_ready' => $isReady,
+        ];
+    }
+
     public function getCurrentStock($bulan = null, $tahun = null)
     {
-        return $this->stock()->first();
+        return $this->getStockSummary($bulan, $tahun);
     }
 }

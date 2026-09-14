@@ -194,7 +194,7 @@ class OrderService
             'qty' => max(0, $available),
             'qty_on_hand' => $stock->qty_on_hand,
             'qty_booking' => $stock->qty_booking,
-            'min_stock' => $part->min_stok,
+            'min_stock' => $stock->min_stock,
         ];
     }
 }

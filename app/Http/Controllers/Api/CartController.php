@@ -17,7 +17,7 @@ class CartController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
-        $cart = $user->activeCart()->with(['items.part', 'items.product'])->first();
+        $cart = $user->activeCart()->with(['items.part.stock', 'items.product'])->first();
 
         if (!$cart) {
             return ApiResponse::success([
