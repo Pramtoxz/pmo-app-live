@@ -81,7 +81,7 @@ class OrderService
             }
 
             // 7. Kirim notifikasi WA ke grup
-            $this->sendOrderNotification($cart, $noSo, $grandTotal);
+            $this->sendOrderNotification($cart, $noSo);
 
             // 8. Kirim push notification ke user
             NotificationHelper::sendOrderNotification($userId, $noSo, 'created');
@@ -99,7 +99,7 @@ class OrderService
         });
     }
 
-    private function sendOrderNotification($cart, $noSo, $grandTotal)
+    private function sendOrderNotification($cart, $noSo)
     {
         try {
             $wa = new WhatsAppGateway(2);
@@ -111,8 +111,7 @@ class OrderService
             $message .= "No. SO: *{$noSo}*\n";
             $message .= "Toko: *{$shopName}*\n";
             $message .= "Kode Toko: {$userToko}\n";
-            $message .= "Jumlah Item: {$itemCount}\n";
-            $message .= "Total: *Rp " . number_format($grandTotal, 0, ',', '.') . "*\n\n";
+            $message .= "Jumlah Item: {$itemCount}\n\n";
             $message .= "Waktu Order " . now()->format('d/m/Y H:i:s');
             $wa->sendToGroup(null, $message);
 
