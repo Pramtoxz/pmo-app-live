@@ -41,120 +41,168 @@ class OrderService
                 }
             }
 
-            // 2. Tentukan jenis order (OIL vs non-OIL)
-            $jenisOrder = $this->determineOrderType($cart);
+            // 2. Kelompokkan item keranjang ke dalam 4 kelompok: OIL, GMO, Tire, HGP
+            $groupedItems = [
+                self::GROUP_OIL  => [],
+                self::GROUP_GMO  => [],
+                self::GROUP_TIRE => [],
+                self::GROUP_HGP  => [],
+            ];
 
-            // 3. Generate nomor SO dengan lock
-            $noSo = Serial::generateSO();
-
-            // 4. Hitung grand total
-            $grandTotal = $cart->items->sum('subtotal');
-
-            // 5. Insert SO header
-            $so = SalesOrder::create([
-                'no_so' => $noSo,
-                'jenis_so' => $jenisOrder,
-                'tgl_so' => now(),
-                'jenis_pembayaran' => 'Cash',
-                'fk_salesman' => $cart->user->shop->fk_sales ?? null,
-                'tipe_source' => 'OTHER',
-                'fk_toko' => $cart->user->fk_toko,
-                'tipe_penjualan' => 'Reguler',
-                'tgl_jatuh_tempo' => now()->addMonth(),
-                'grand_total' => $grandTotal,
-                'status_outstanding' => true,
-                'status_approve_reject' => 'Waiting For Approval',
-                'keterangan'=> 'Order by PMO'
-            ]);
-
-            // 6. Insert SO detail
             foreach ($cart->items as $item) {
-                SalesOrderDetail::create([
-                    'fk_so' => $noSo,
-                    'fk_part' => $item->kode_part,
-                    'harga' => $item->harga,
-                    'qty_so' => $item->qty,
-                    'total_harga' => $item->subtotal,
-                    'qty_sisa' => $item->qty,
-                    'fk_tipe' => '',
-                ]);
+                $fkDetail = $item->part->fk_detail_sub_kelompok_part ?? null;
+                if (!$fkDetail && $item->part === null) {
+                    $part = Part::where('kd_part', $item->kode_part)->first();
+                    $fkDetail = $part->fk_detail_sub_kelompok_part ?? null;
+                }
+                $group = $this->getPartGroup($fkDetail);
+                $groupedItems[$group][] = $item;
             }
 
-            // 7. Kirim notifikasi WA ke grup
-            $this->sendOrderNotification($cart, $noSo);
+            $orders = [];
+            $totalAllGrandTotal = 0;
+            $totalAllItemsCount = 0;
 
-            // 8. Kirim push notification ke user
-            NotificationHelper::sendOrderNotification($userId, $noSo, 'created');
+            // 3. Buat SO untuk tiap kelompok yang memiliki item
+            foreach ($groupedItems as $groupName => $items) {
+                if (empty($items)) {
+                    continue;
+                }
 
-            // 9. Clear cart
+                $groupTotal = 0;
+                foreach ($items as $item) {
+                    $groupTotal += (float) $item->subtotal;
+                }
+                $totalAllGrandTotal += $groupTotal;
+                $totalAllItemsCount += count($items);
+
+                $noSo = Serial::generateSO();
+                $jenisOrder = $this->getJenisSoByGroup($groupName);
+                $keterangan = $this->getKeteranganByGroup($groupName);
+
+                // Insert SO header ke data_part.tblso
+                $so = SalesOrder::create([
+                    'no_so' => $noSo,
+                    'jenis_so' => $jenisOrder,
+                    'tgl_so' => now(),
+                    'jenis_pembayaran' => 'Cash',
+                    'fk_salesman' => $cart->user->shop->fk_sales ?? null,
+                    'tipe_source' => 'OTHER',
+                    'fk_toko' => $cart->user->fk_toko,
+                    'tipe_penjualan' => 'Reguler',
+                    'tgl_jatuh_tempo' => now()->addMonth(),
+                    'grand_total' => $groupTotal,
+                    'status_outstanding' => true,
+                    'status_approve_reject' => 'Waiting For Approval',
+                    'keterangan' => $keterangan,
+                ]);
+
+                // Insert SO detail ke data_part.tblso_detail
+                foreach ($items as $item) {
+                    SalesOrderDetail::create([
+                        'fk_so' => $noSo,
+                        'fk_part' => $item->kode_part,
+                        'harga' => $item->harga,
+                        'qty_so' => $item->qty,
+                        'total_harga' => $item->subtotal,
+                        'qty_sisa' => $item->qty,
+                        'fk_tipe' => '',
+                    ]);
+                }
+
+                $orders[] = [
+                    'kelompok' => $groupName,
+                    'no_so' => $noSo,
+                    'jenis_so' => $jenisOrder,
+                    'keterangan' => $keterangan,
+                    'grand_total' => $groupTotal,
+                    'items_count' => count($items),
+                ];
+            }
+
+            if (empty($orders)) {
+                throw new \Exception('Tidak ada item valid untuk diproses.');
+            }
+
+            // 4. Kirim notifikasi WA ke grup (1 pesan gabungan sesuai Opsi 1)
+            $this->sendOrderNotification($cart, $orders, $totalAllItemsCount);
+
+            // 5. Kirim push notification ke user
+            $allSoNumbers = array_column($orders, 'no_so');
+            $soSummary = implode(', ', $allSoNumbers);
+            NotificationHelper::sendOrderNotification($userId, $soSummary, 'created');
+
+            // 6. Clear cart
             $cart->items()->delete();
             $cart->delete();
 
+            $firstOrder = $orders[0];
+
             return [
-                'no_so' => $noSo,
-                'jenis_so' => $jenisOrder,
-                'grand_total' => $grandTotal,
+                'no_so' => $firstOrder['no_so'],
+                'jenis_so' => count($orders) > 1 ? 'Multi SO' : $firstOrder['jenis_so'],
+                'grand_total' => $totalAllGrandTotal,
                 'status' => 'Waiting For Approval',
+                'orders' => $orders,
             ];
         });
     }
 
-    private function sendOrderNotification($cart, $noSo)
+    public const GROUP_OIL = 'OIL';
+    public const GROUP_GMO = 'GMO';
+    public const GROUP_TIRE = 'Tire';
+    public const GROUP_HGP = 'HGP';
+
+    public function getPartGroup(?string $fkDetailSubKelompok): string
+    {
+        $code = strtoupper(trim((string) $fkDetailSubKelompok));
+        if ($code === 'OIL') {
+            return self::GROUP_OIL;
+        }
+        if ($code === 'GMO') {
+            return self::GROUP_GMO;
+        }
+        if ($code === 'TIRE' || $code === 'TIRE1') {
+            return self::GROUP_TIRE;
+        }
+        return self::GROUP_HGP;
+    }
+
+    public function getJenisSoByGroup(string $group): string
+    {
+        return $group === self::GROUP_OIL ? 'Oli Regular' : 'Other';
+    }
+
+    public function getKeteranganByGroup(string $group): string
+    {
+        return 'Order by PMO - ' . $group;
+    }
+
+    private function sendOrderNotification($cart, array $orders, int $totalItemCount)
     {
         try {
             $wa = new WhatsAppGateway(2);
-            $shopName = $cart->user->shop->nama;
-            $userToko = $cart->user->fk_toko;
-            $itemCount = $cart->items->count();
+            $shopName = $cart->user->shop->nama ?? 'Toko';
+            $userToko = $cart->user->fk_toko ?? '-';
 
             $message = "🔔 *ORDER BARU - PMO*\n\n";
-            $message .= "No. SO: *{$noSo}*\n";
             $message .= "Toko: *{$shopName}*\n";
             $message .= "Kode Toko: {$userToko}\n";
-            $message .= "Jumlah Item: {$itemCount}\n\n";
-            $message .= "Waktu Order " . now()->format('d/m/Y H:i:s');
+            $message .= "Total Item: {$totalItemCount} item\n\n";
+            $message .= "*No. Sales Order:*\n";
+
+            foreach ($orders as $order) {
+                $kelompok = $order['kelompok'];
+                $noSo = $order['no_so'];
+                $itemCount = $order['items_count'];
+                $message .= "• [{$kelompok}] {$noSo} ({$itemCount} item)\n";
+            }
+
+            $message .= "\nWaktu Order: " . now()->format('d/m/Y H:i:s');
             $wa->sendToGroup(null, $message);
 
         } catch (\Exception $e) {
             Log::error('Error kirim notifikasi WA: ' . $e->getMessage());
-        }
-    }
-
-    private function determineOrderType($cart)
-    {
-        $countOil = 0;
-        $countPart = 0;
-        $firstItem = null;
-
-        foreach ($cart->items as $item) {
-            if (!$firstItem) {
-                $firstItem = $item;
-            }
-            $part = Part::where('kd_part', $item->kode_part)->first();
-
-            if ($part) {
-                // Cek apakah fk_detail_sub_kelompok_part == 'OIL'
-                if ($part->fk_detail_sub_kelompok_part == 'OIL') {
-                    $countOil++;
-                } else {
-                    $countPart++;
-                }
-            } else {
-                $countPart++;
-            }
-        }
-
-        if ($countPart < $countOil) {
-            return 'Oli Regular';
-        } elseif ($countPart > $countOil) {
-            return 'Other';
-        } else {
-            $firstPart = Part::where('kd_part', $firstItem->kode_part)->first();
-
-            if ($firstPart && $firstPart->fk_detail_sub_kelompok_part == 'OIL') {
-                return 'Oli Regular';
-            }
-            return 'Other';
         }
     }
 
